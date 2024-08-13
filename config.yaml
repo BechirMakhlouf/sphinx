@@ -1,5 +1,0 @@
-application:
-  port: 3333
-  host: 0.0.0.0
-database:
-  require_ssl: false
