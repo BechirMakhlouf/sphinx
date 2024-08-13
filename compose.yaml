@@ -1,0 +1,39 @@
+services:
+  # redis:
+  #   image: redis:latest
+  #   ports:
+  #     - 6379:6379
+  sphinx:
+    build: .
+    container_name: sphinx-server
+    ports:
+      - ${APP_APPLICATION__PORT:-3333}:${APP_APPLICATION__PORT:-3333}
+    environment:
+      # sphinx 
+      APP_APPLICATION__HOST: ${APP_APPLICATION__HOST:-0.0.0.0}
+      APP_APPLICATION__PORT: ${APP_APPLICATION__PORT:-3333}
+      # database
+      APP_DATABASE__PASSWORD: ${APP_DATABASE__PASSWORD:-password}
+      APP_DATABASE__USER: ${APP_DATABASE__USER:-postgres}
+      APP_DATABASE__PORT: ${APP_DATABASE__PORT:-5432}
+      APP_DATABASE__HOST: ${APP_DATABASE__HOST:-localhost}
+      APP_DATABASE__NAME: ${APP__DATABASE_NAME:-postgres}
+      APP_DATABASE__REQUIRE_SSL: ${APP_DATABASE__REQUIRE_SSL:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: ${APP_DATABASE__PASSWORD:-password}
+      POSTGRES_USER: ${APP_DATABASE__USER:-postgres}
+      POSTGRES_PORT: ${APP_DATABASE__PORT:-5432}
+      POSTGRES_HOST: ${APP_DATABASE__HOST:-localhost}
+      POSTGRES_DB: ${APP__DATABASE_NAME:-postgres}
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -h $${POSTGRES_HOST}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

@@ -12,7 +12,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 # Build application
 COPY . .
 ENV SQLX_OFFLINE=true
-RUN cargo build --release --bin server
+RUN cargo build --release --bin sphinx
 
 # We do not need the Rust toolchain to run the binary!
 FROM debian:bookworm-slim AS runtime
@@ -23,8 +23,8 @@ RUN apt-get update -y \
   && apt-get autoremove -y \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /app/target/release/server /usr/local/bin
+COPY --from=builder /app/target/release/sphinx /usr/local/bin
 # COPY configuration configuration
 
 ENV APP_ENVIRONMENT=prod
-ENTRYPOINT ["/usr/local/bin/server"]
+ENTRYPOINT ["/usr/local/bin/sphinx"]
