@@ -26,5 +26,6 @@ cover your authentication needs without the headache.
 
 # Architecture
 - This is how the server is aimed to work in relation to other services.
+
 ![sphinx auth server architecture](https://i.ibb.co/7r8rHSQ/image.png)
 

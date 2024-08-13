@@ -6,7 +6,7 @@ CREATE TABLE auth.users (
 
   encrypted_password VARCHAR(1000) NOT NULL,
 
-  email VARCHAR(320) CHECK(email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}$'),
+  email VARCHAR(320) UNIQUE CHECK(email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}$'),
 	email_confirmed_at TIMESTAMPTZ NULL,
 
 	last_sign_in_at TIMESTAMPTZ NULL,

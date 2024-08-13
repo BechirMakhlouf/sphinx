@@ -1,5 +1,5 @@
 [package]
-name = "auth-server"
+name = "sphinx"
 version = "0.1.0"
 edition = "2021"
 
@@ -26,6 +26,10 @@ sqlx = { version = "0.8", features = [
   "chrono",
   "migrate",
 ] }
+config = { version = "0.14.0", features = ["yaml"] }
+serde-aux = "4.5.0"
+thiserror = "1.0.63"
+dotenv = "0.15.0"
 
 [profile.release]
 lto = true
