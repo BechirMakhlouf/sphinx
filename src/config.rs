@@ -65,7 +65,7 @@ impl RedisSettings {
     }
 }
 
-pub fn get_config() -> Result<Config, ()> {
+pub fn get_config() -> Config {
     let config_path = std::env::current_dir()
         .expect("couldn't get current working directory")
         .join(CONFIG_FILE_NAME);
@@ -79,7 +79,7 @@ pub fn get_config() -> Result<Config, ()> {
         .build()
         .expect("error while building config");
 
-    Ok(config
+    config
         .try_deserialize::<Config>()
-        .expect("error while fetching config files"))
+        .expect("error while fetching config files")
 }
