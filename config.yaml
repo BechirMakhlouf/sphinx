@@ -5,3 +5,8 @@ jwt:
     exp_duration_secs: 300 # 5 minutes
   refresh_token:
     exp_duration_secs: 2592000 # 30 days
+oauth:
+  discord:
+    auth_url: https://discord.com/api/oauth2/authorize?response_type=code
+    token_url: https://discord.com/api/oauth2/token
+    redirect_url: http://0.0.0.0:3333/auth/authorized

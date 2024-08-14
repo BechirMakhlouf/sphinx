@@ -1,5 +1,3 @@
-use routes::test_oauth;
-
 pub mod config;
 pub mod models;
 pub mod oauth;
