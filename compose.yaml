@@ -1,8 +1,4 @@
 services:
-  # redis:
-  #   image: redis:latest
-  #   ports:
-  #     - 6379:6379
   sphinx:
     build: .
     container_name: sphinx-server
@@ -19,8 +15,11 @@ services:
       APP_DATABASE__HOST: ${APP_DATABASE__HOST:-localhost}
       APP_DATABASE__NAME: ${APP__DATABASE_NAME:-postgres}
       APP_DATABASE__REQUIRE_SSL: ${APP_DATABASE__REQUIRE_SSL:-false}
-    depends_on:
+      APP_REDIS__URL: ${APP_REDIS__URL:-redis://127.0.0.1:6379}
+      depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
   db:
     image: postgres:latest
@@ -30,10 +29,15 @@ services:
       POSTGRES_PORT: ${APP_DATABASE__PORT:-5432}
       POSTGRES_HOST: ${APP_DATABASE__HOST:-localhost}
       POSTGRES_DB: ${APP__DATABASE_NAME:-postgres}
-    ports:
-      - 5432:5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -h $${POSTGRES_HOST}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 10
