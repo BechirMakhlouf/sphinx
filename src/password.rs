@@ -3,7 +3,7 @@ pub struct PasswordHandler<'a> {
     argon2: argon2::Argon2<'a>,
 }
 
-//TODO: remove the unwraps
+//TODO: remove the unwraps (proper error handling)
 impl PasswordHandler<'_> {
     pub fn encrypt_password(&self, password: &str) -> String {
         use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};

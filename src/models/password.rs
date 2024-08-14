@@ -6,6 +6,8 @@ pub struct Password(secrecy::Secret<String>);
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct EncryptedPassword(String);
 
+//TODO: Make suitable errors
+
 impl TryFrom<&str> for Password {
     type Error = ();
     fn try_from(password: &str) -> Result<Self, Self::Error> {
@@ -46,6 +48,7 @@ impl EncryptedPassword {
     pub fn from_trusted_str(encrypted_password: &str) -> Self {
         Self(encrypted_password.to_string())
     }
+
     pub fn from_trusted_string(encrypted_password: String) -> Self {
         Self(encrypted_password)
     }
