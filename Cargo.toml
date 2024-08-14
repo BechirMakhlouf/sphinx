@@ -5,13 +5,10 @@ edition = "2021"
 
 [dependencies]
 argon2 = "0.5.3"
-anyhow = "1"
-async-session = "3.0.0"
 axum = { version = "0.7.5" }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 http = "1.1.0"
-oauth2 = "4.1"
-# Use Rustls because it makes it easier to cross-compile on CI
+oauth2 = "4.4.2"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
@@ -26,11 +23,11 @@ sqlx = { version = "0.8", features = [
   "chrono",
   "migrate",
 ] }
-config = { version = "0.14.0", features = ["yaml"] }
+config = { version = "0.14.0" }
 serde-aux = "4.5.0"
 thiserror = "1.0.63"
 dotenv = "0.15.0"
-redis = "0.26.1"
+redis = { version = "0.26.1", features = ["r2d2", "tokio-comp"] }
 secrecy = { version = "0.8.0", features = ["serde"] }
 
 [profile.release]

@@ -8,6 +8,7 @@ static CONFIG_FILE_NAME: &str = "config.yaml";
 pub struct Config {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
+    pub redis: RedisSettings,
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -28,6 +29,11 @@ pub struct DatabaseSettings {
     require_ssl: bool,
 }
 
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct RedisSettings {
+    url: String,
+}
+
 impl DatabaseSettings {
     pub fn get_db_pool(&self) -> sqlx::PgPool {
         let ssl_mode = if self.require_ssl {
@@ -44,6 +50,18 @@ impl DatabaseSettings {
             .ssl_mode(ssl_mode);
 
         sqlx::PgPool::connect_lazy_with(options)
+    }
+}
+
+impl RedisSettings {
+    pub async fn get_redis_async_conn(&self) -> redis::aio::MultiplexedConnection {
+        let client =
+            redis::Client::open(self.url.as_str()).expect("failed to open a redis client.");
+
+        client
+            .get_multiplexed_async_connection()
+            .await
+            .expect("failed to establish a multiplexed async connection with redis")
     }
 }
 
