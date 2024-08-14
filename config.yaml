@@ -1,6 +1,6 @@
 jwt:
   iss: sphinx
-  aud: sphinx_users 
+  aud: ["sphinx-users"] 
   access_token:
     exp_duration_secs: 300 # 5 minutes
   refresh_token:

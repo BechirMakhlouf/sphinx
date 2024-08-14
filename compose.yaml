@@ -3,37 +3,37 @@ services:
     build: .
     container_name: sphinx-server
     ports:
-      - ${APP_APPLICATION__PORT:-3333}:${APP_APPLICATION__PORT:-3333}
+      - ${SPHINX_APPLICATION__PORT:-3333}:${SPHINX_APPLICATION__PORT:-3333}
     environment:
       # sphinx 
-      APP_APPLICATION__HOST: ${APP_APPLICATION__HOST:-0.0.0.0}
-      APP_APPLICATION__PORT: ${APP_APPLICATION__PORT:-3333}
+      SPHINX_APPLICATION__HOST: ${SPHINX_APPLICATION__HOST:-0.0.0.0}
+      SPHINX_APPLICATION__PORT: ${SPHINX_APPLICATION__PORT:-3333}
       # database
-      APP_DATABASE__PASSWORD: ${APP_DATABASE__PASSWORD:-password}
-      APP_DATABASE__USER: ${APP_DATABASE__USER:-postgres}
-      APP_DATABASE__PORT: ${APP_DATABASE__PORT:-5432}
-      APP_DATABASE__HOST: ${APP_DATABASE__HOST:-localhost}
-      APP_DATABASE__NAME: ${APP__DATABASE_NAME:-postgres}
-      APP_DATABASE__REQUIRE_SSL: ${APP_DATABASE__REQUIRE_SSL:-false}
-      APP_REDIS__URL: ${APP_REDIS__URL:-redis://127.0.0.1:6379}
-      healthcheck:
-        test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
-        interval: 5s
-        timeout: 5s
-        retries: 10
-      depends_on:
-        db:
-          condition: service_healthy
-        redis:
-          condition: service_healthy
+      SPHINX_DATABASE__PASSWORD: ${SPHINX_DATABASE__PASSWORD:-password}
+      SPHINX_DATABASE__USER: ${SPHINX_DATABASE__USER:-postgres}
+      SPHINX_DATABASE__PORT: ${SPHINX_DATABASE__PORT:-5432}
+      SPHINX_DATABASE__HOST: ${SPHINX_DATABASE__HOST:-localhost}
+      SPHINX_DATABASE__NAME: ${SPHINX__DATABASE_NAME:-postgres}
+      SPHINX_DATABASE__REQUIRE_SSL: ${SPHINX_DATABASE__REQUIRE_SSL:-false}
+      SPHINX_REDIS__URL: ${SPHINX_REDIS__URL:-redis://127.0.0.1:6379}
+    healthcheck:
+      test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   db:
     image: postgres:latest
     environment:
-      POSTGRES_PASSWORD: ${APP_DATABASE__PASSWORD:-password}
-      POSTGRES_USER: ${APP_DATABASE__USER:-postgres}
-      POSTGRES_PORT: ${APP_DATABASE__PORT:-5432}
-      POSTGRES_HOST: ${APP_DATABASE__HOST:-localhost}
-      POSTGRES_DB: ${APP__DATABASE_NAME:-postgres}
+      POSTGRES_PASSWORD: ${SPHINX_DATABASE__PASSWORD:-password}
+      POSTGRES_USER: ${SPHINX_DATABASE__USER:-postgres}
+      POSTGRES_PORT: ${SPHINX_DATABASE__PORT:-5432}
+      POSTGRES_HOST: ${SPHINX_DATABASE__HOST:-localhost}
+      POSTGRES_DB: ${SPHINX__DATABASE_NAME:-postgres}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -h $${POSTGRES_HOST}"]
       interval: 5s
