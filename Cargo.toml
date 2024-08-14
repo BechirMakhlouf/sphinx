@@ -29,6 +29,7 @@ thiserror = "1.0.63"
 dotenv = "0.15.0"
 redis = { version = "0.26.1", features = ["r2d2", "tokio-comp"] }
 secrecy = { version = "0.8.0", features = ["serde"] }
+jsonwebtoken = "9.3.0"
 
 [profile.release]
 lto = true
