@@ -1,6 +1,8 @@
 pub mod config;
-pub mod routes;
+pub mod crypto;
 pub mod models;
+pub mod routes;
+
 pub fn init_tracing() {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
