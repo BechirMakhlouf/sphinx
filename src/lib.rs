@@ -1,6 +1,6 @@
 pub mod config;
-pub mod crypto;
 pub mod models;
+pub mod password;
 pub mod routes;
 
 pub fn init_tracing() {
