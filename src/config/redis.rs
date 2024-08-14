@@ -1,6 +1,6 @@
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct Settings {
-    url: String,
+    url: url::Url,
 }
 
 impl Settings {
