@@ -16,11 +16,16 @@ services:
       APP_DATABASE__NAME: ${APP__DATABASE_NAME:-postgres}
       APP_DATABASE__REQUIRE_SSL: ${APP_DATABASE__REQUIRE_SSL:-false}
       APP_REDIS__URL: ${APP_REDIS__URL:-redis://127.0.0.1:6379}
+      healthcheck:
+        test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
+        interval: 5s
+        timeout: 5s
+        retries: 10
       depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+        db:
+          condition: service_healthy
+        redis:
+          condition: service_healthy
   db:
     image: postgres:latest
     environment:
