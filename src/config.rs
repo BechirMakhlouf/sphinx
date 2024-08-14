@@ -1,6 +1,6 @@
 mod application;
 mod database;
-mod jwt;
+pub mod jwt;
 mod redis;
 
 static CONFIG_FILE_NAME: &str = "config.yaml";
@@ -14,6 +14,8 @@ pub struct Config {
 }
 
 pub fn get_config() -> Config {
+    dotenv::dotenv().ok();
+
     let config_path = std::env::current_dir()
         .expect("couldn't get current working directory")
         .join(CONFIG_FILE_NAME);
@@ -21,7 +23,7 @@ pub fn get_config() -> Config {
     let config = config::Config::builder()
         .add_source(config::File::from(config_path))
         .add_source(
-            config::Environment::with_prefix("APP")
+            config::Environment::with_prefix("SPHINX")
                 .prefix_separator("_")
                 .separator("__"),
         )
