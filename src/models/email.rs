@@ -1,4 +1,5 @@
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::Type, Clone)]
+#[sqlx(transparent)]
 pub struct Email(String);
 
 //TODO: make proper error handling with thiserror
@@ -6,6 +7,7 @@ impl TryFrom<&str> for Email {
     type Error = String;
     fn try_from(email: &str) -> Result<Self, Self::Error> {
         let is_valid = validator::ValidateEmail::validate_email(&email);
+
         match is_valid {
             true => Ok(Self(email.into())),
             false => Err("Invalid Email".into()),
