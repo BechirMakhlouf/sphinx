@@ -4,7 +4,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub async fn get_redis_async_conn(&self) -> redis::aio::MultiplexedConnection {
+    pub async fn get_async_connection(&self) -> redis::aio::MultiplexedConnection {
         let client =
             redis::Client::open(self.url.as_str()).expect("failed to open a redis client.");
 
@@ -12,5 +12,8 @@ impl Settings {
             .get_multiplexed_async_connection()
             .await
             .expect("failed to establish a multiplexed async connection with redis")
+    }
+    pub fn get_client(&self) -> redis::Client {
+        redis::Client::open(self.url.as_str()).expect("failed to open a redis client.")
     }
 }
