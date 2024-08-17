@@ -1,18 +1,26 @@
 -- Add migration script here
 
-CREATE TABLE IF NOT EXISTS auth.identities (
-    id text NOT NULL,
-    user_id uuid NOT NULL,
-    identity_data JSONB NOT NULL,
-    provider text NOT NULL,
-    last_sign_in_at timestamptz NULL,
+CREATE TYPE auth_provider
+AS 
+ENUM('email', 'google', 'discord', 'apple', 'github');
 
-    email VARCHAR(320) UNIQUE CHECK(email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}$'),
+CREATE TABLE IF NOT EXISTS auth.identities (
+    user_id UUID NOT NULL,
+
+    provider AUTH_PROVIDER NOT NULL,
+    provider_user_id TEXT NOT NULL,
+    provider_data JSONB NOT NULL,
+    
+    email VARCHAR(320) NOT NULL,
+    is_email_confirmed BOOL NULL,
+
+    phone text NULL,
+    is_phone_confirmed BOOL NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT identities_pkey PRIMARY KEY (provider, id),
+    CONSTRAINT identities_pkey PRIMARY KEY (provider, provider_user_id),
     CONSTRAINT identities_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 );
 

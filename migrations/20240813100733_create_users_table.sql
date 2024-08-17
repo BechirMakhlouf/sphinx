@@ -1,18 +1,22 @@
 -- Add migration script here
 CREATE SCHEMA IF NOT EXISTS auth;
 
+
+
 CREATE TABLE auth.users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  encrypted_password VARCHAR(1000) NOT NULL,
-
-  email VARCHAR(320) UNIQUE CHECK(email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z]{2,}$'),
-	email_confirmed_at TIMESTAMPTZ NULL,
+  encrypted_password TEXT NULL,
 
 	last_sign_in_at TIMESTAMPTZ NULL,
 
-  phone VARCHAR(255) NULL,
+  email VARCHAR(320) UNIQUE NOT NULL,
+	email_confirmed_at TIMESTAMPTZ NULL,
+
+  phone VARCHAR(255) UNIQUE NULL,
   phone_confirmed_at TIMESTAMPTZ NULL,
+
+  is_admin BOOL NOT NULL DEFAULT false,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
