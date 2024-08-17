@@ -19,6 +19,7 @@ pub struct AccessTokenClaims {
     pub sub: uuid::Uuid,
     pub iat: u64,
     pub exp: u64,
+    pub data: Option<serde_json::Value>,
 }
 
 impl TokenClaims for AccessTokenClaims {}
@@ -62,13 +63,18 @@ impl TokenFactory {
         }
     }
 
-    fn create_access_claims(&self, sub: uuid::Uuid) -> AccessTokenClaims {
+    fn create_access_claims(
+        &self,
+        sub: uuid::Uuid,
+        data: Option<serde_json::Value>,
+    ) -> AccessTokenClaims {
         AccessTokenClaims {
             aud: self.aud.clone(),
             iss: self.iss.clone(),
             sub,
             iat: jsonwebtoken::get_current_timestamp(),
             exp: jsonwebtoken::get_current_timestamp() + self.access_duration_secs,
+            data,
         }
     }
 
@@ -154,7 +160,7 @@ mod tests {
         let jwt_config: config::jwt::Settings = config::get_config().jwt;
         let token_factory = TokenFactory::new(jwt_config);
 
-        let access_token_claims = token_factory.create_access_claims(uuid::Uuid::new_v4());
+        let access_token_claims = token_factory.create_access_claims(uuid::Uuid::new_v4(), None);
         let access_token = token_factory.encode_token(&access_token_claims);
 
         let decoded_access_token = token_factory

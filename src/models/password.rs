@@ -3,7 +3,8 @@ use secrecy::ExposeSecret;
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Password(secrecy::Secret<String>);
 
-#[derive(Debug, serde::Deserialize, Clone)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, sqlx::Type, Clone)]
+#[sqlx(transparent)]
 pub struct EncryptedPassword(String);
 
 //TODO: Make suitable errors
