@@ -6,9 +6,7 @@ Sphinx is an auth server written in rust.
 
 - **Objective**:
 This project aims to me be a simple auth server that covers *almost* all 
-your auth needs when developing new projects, this will probably will
-cover your authentication needs without the headache.
-
+your auth needs when developing new projects.
 # Roadmap
 ## Core Functionality
 - [ ] Email/password login
