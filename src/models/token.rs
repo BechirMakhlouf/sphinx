@@ -1,9 +1,7 @@
-#![allow(unused)]
+#![allow(unused_variables)]
 
 use secrecy::ExposeSecret;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-use crate::config::jwt;
 
 enum TokenType {
     Refresh,
@@ -19,6 +17,7 @@ pub struct AccessTokenClaims {
     pub sub: uuid::Uuid,
     pub iat: u64,
     pub exp: u64,
+    pub session_id: uuid::Uuid,
     pub data: Option<serde_json::Value>,
 }
 
@@ -31,12 +30,13 @@ pub struct RefreshTokenClaims {
     pub sub: uuid::Uuid,
     pub iat: u64,
     pub exp: u64,
+    pub session_id: uuid::Uuid,
     pub jti: uuid::Uuid,
 }
 
 impl TokenClaims for RefreshTokenClaims {}
 
-struct TokenFactory {
+pub struct TokenFactory {
     iss: String,
     aud: Vec<String>,
     refresh_secret: secrecy::Secret<String>,
@@ -63,9 +63,10 @@ impl TokenFactory {
         }
     }
 
-    fn create_access_claims(
+    pub fn create_access_claims(
         &self,
         sub: uuid::Uuid,
+        session_id: uuid::Uuid,
         data: Option<serde_json::Value>,
     ) -> AccessTokenClaims {
         AccessTokenClaims {
@@ -74,16 +75,37 @@ impl TokenFactory {
             sub,
             iat: jsonwebtoken::get_current_timestamp(),
             exp: jsonwebtoken::get_current_timestamp() + self.access_duration_secs,
+            session_id,
             data,
         }
     }
 
-    fn create_refresh_claims(&self, sub: uuid::Uuid) -> RefreshTokenClaims {
+    pub fn create_access_token(
+        &self,
+        sub: uuid::Uuid,
+        session_id: uuid::Uuid,
+        data: Option<serde_json::Value>,
+    ) -> String {
+        let claims = self.create_access_claims(sub, session_id, data);
+        self.encode_token(&claims)
+    }
+
+    pub fn create_refresh_token(&self, sub: uuid::Uuid, session_id: uuid::Uuid) -> String {
+        let claims = self.create_refresh_claims(sub, session_id);
+        self.encode_token(&claims)
+    }
+
+    pub fn create_refresh_claims(
+        &self,
+        sub: uuid::Uuid,
+        session_id: uuid::Uuid,
+    ) -> RefreshTokenClaims {
         RefreshTokenClaims {
             jti: uuid::Uuid::new_v4(),
             aud: self.aud.clone(),
             iss: self.iss.clone(),
             sub,
+            session_id,
             iat: jsonwebtoken::get_current_timestamp(),
             exp: jsonwebtoken::get_current_timestamp() + self.refresh_duration_secs,
         }
@@ -160,7 +182,8 @@ mod tests {
         let jwt_config: config::jwt::Settings = config::get_config().jwt;
         let token_factory = TokenFactory::new(jwt_config);
 
-        let access_token_claims = token_factory.create_access_claims(uuid::Uuid::new_v4(), None);
+        let access_token_claims =
+            token_factory.create_access_claims(uuid::Uuid::new_v4(), uuid::Uuid::new_v4(), None);
         let access_token = token_factory.encode_token(&access_token_claims);
 
         let decoded_access_token = token_factory
