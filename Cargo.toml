@@ -15,14 +15,7 @@ tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
-sqlx = { version = "0.8", features = [
-  "runtime-tokio-rustls",
-  "macros",
-  "postgres",
-  "uuid",
-  "chrono",
-  "migrate",
-] }
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate", "json", "ipnetwork"] }
 config = { version = "0.14.0" }
 serde-aux = "4.5.0"
 thiserror = "1.0.63"
@@ -33,6 +26,9 @@ jsonwebtoken = "9.3.0"
 uuid = { version = "1.10.0", features = ["serde", "v4"] }
 validator = "0.18.1"
 url = { version = "2.5.2", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+serde_json = "1.0.125"
+lettre = { version = "0.11.7", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls-tls"] }
 
 [profile.release]
 lto = true
