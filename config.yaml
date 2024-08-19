@@ -1,12 +1,29 @@
+application:
+  host: 0.0.0.0
+  port: 3333
+database:
+  user: postgres
+  port: 5432
+  host: localhost
+  name: postgres
+  require_ssl: false
+redis:
+  url: redis://127.0.0.1:6379
 jwt:
   iss: sphinx
   aud: ["sphinx-users"] 
   access_token:
-    exp_duration_secs: 300 # 5 minutes
+    exp_duration_secs: 600 # 10 minutes
   refresh_token:
     exp_duration_secs: 2592000 # 30 days
 oauth:
   discord:
     auth_url: https://discord.com/api/oauth2/authorize?response_type=code
     token_url: https://discord.com/api/oauth2/token
-    redirect_url: http://0.0.0.0:3333/auth/authorized
+    redirect_url: http://0.0.0.0:3333/oauth/discord/callback
+smtp:
+  url: live.smtp.mailtrap.io 
+  username: api
+  mailbox:
+    email: mailtrap@demomailtrap.com
+    name: "Private Person"
