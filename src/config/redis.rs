@@ -13,6 +13,7 @@ impl Settings {
             .await
             .expect("failed to establish a multiplexed async connection with redis")
     }
+
     pub fn get_client(&self) -> redis::Client {
         redis::Client::open(self.url.as_str()).expect("failed to open a redis client.")
     }

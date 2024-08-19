@@ -1,8 +1,9 @@
-mod application;
-mod database;
+pub mod application;
+pub mod database;
 pub mod jwt;
 pub mod oauth;
-mod redis;
+pub mod redis;
+pub mod smtp;
 
 static CONFIG_FILE_NAME: &str = "config.yaml";
 
@@ -13,6 +14,7 @@ pub struct Config {
     pub redis: redis::Settings,
     pub jwt: jwt::Settings,
     pub oauth: oauth::Settings,
+    pub smtp: smtp::Settings,
 }
 
 pub fn get_config() -> Config {
