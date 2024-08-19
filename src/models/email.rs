@@ -1,16 +1,30 @@
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, thiserror::Error)]
+pub enum Error {
+    #[error("Provided email is invalid: {0}")]
+    InvalidEmail(String),
+}
+
+type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug, serde::Serialize, serde::Deserialize, sqlx::Type, Clone)]
 #[sqlx(transparent)]
 pub struct Email(String);
 
-//TODO: make proper error handling with thiserror
+impl std::fmt::Display for Email {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl TryFrom<&str> for Email {
-    type Error = String;
-    fn try_from(email: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+
+    fn try_from(email: &str) -> Result<Self> {
         let is_valid = validator::ValidateEmail::validate_email(&email);
 
         match is_valid {
             true => Ok(Self(email.into())),
-            false => Err("Invalid Email".into()),
+            false => Err(Error::InvalidEmail(email.into())),
         }
     }
 }

@@ -109,6 +109,7 @@ impl IdentityBuilder {
             phone: self.phone,
             is_phone_confirmed: self.is_phone_confirmed,
             provider_data: self.provider_data,
+
             created_at: self.created_at,
             updated_at: self.updated_at,
         }

@@ -1,4 +1,16 @@
 use secrecy::ExposeSecret;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, thiserror::Error)]
+pub enum Error {
+    #[error("Provided password is weak: {0}")]
+    WeakPassword(String),
+
+    #[error("Internal error: {0}")]
+    InternalError(String),
+}
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct Password(secrecy::Secret<String>);
@@ -7,14 +19,13 @@ pub struct Password(secrecy::Secret<String>);
 #[sqlx(transparent)]
 pub struct EncryptedPassword(String);
 
-//TODO: Make suitable errors
-
 impl TryFrom<&str> for Password {
-    type Error = ();
-    fn try_from(password: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(password: &str) -> Result<Self> {
         Ok(Self(secrecy::Secret::new(password.into())))
     }
 }
+
 impl Password {
     pub fn encrypt(&self) -> EncryptedPassword {
         use argon2::password_hash::{rand_core::OsRng, PasswordHasher, SaltString};
@@ -31,8 +42,8 @@ impl Password {
 }
 
 impl TryFrom<&str> for EncryptedPassword {
-    type Error = ();
-    fn try_from(encrypted_password: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(encrypted_password: &str) -> Result<Self> {
         use argon2::PasswordVerifier;
 
         let parsed_hash = argon2::PasswordHash::new(&encrypted_password).unwrap();
@@ -40,8 +51,13 @@ impl TryFrom<&str> for EncryptedPassword {
         match argon2::Argon2::default().verify_password(encrypted_password.as_bytes(), &parsed_hash)
         {
             Ok(_) => Ok(Self(encrypted_password.to_string())),
-            Err(_) => Err(()),
+            Err(err) => Err(Error::InternalError(err.to_string())),
         }
+    }
+}
+impl ToString for EncryptedPassword {
+    fn to_string(&self) -> String {
+        self.0.clone()
     }
 }
 
