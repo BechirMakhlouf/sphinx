@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS auth.identities (
 
     provider AUTH_PROVIDER NOT NULL,
     provider_user_id TEXT NOT NULL,
+
     provider_data JSONB NOT NULL,
     
     email VARCHAR(320) NOT NULL,

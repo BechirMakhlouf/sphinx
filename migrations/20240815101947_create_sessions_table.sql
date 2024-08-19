@@ -1,9 +1,10 @@
 -- Add migration script here
 CREATE TABLE IF NOT EXISTS auth.sessions (
-    id uuid NOT NULL,
-    user_id uuid NOT NULL,
-    user_agent text NOT NULL,
-    ip inet NULL,
+
+    id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    user_agent TEXT NOT NULL,
+    ip inet NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
