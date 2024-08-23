@@ -1,6 +1,14 @@
 application:
   host: 0.0.0.0
   port: 3333
+  config: 
+    allow_unverified: false
+    reset_password:
+      callback: http://0.0.0.0:3333/reset-password/callback
+      token_expiration_secs: 3600
+    confirm_email:
+      callback: http://0.0.0.0:3333/confirm-email/callback
+      token_expiration_secs: 3600
 database:
   user: postgres
   port: 5432
@@ -16,6 +24,8 @@ jwt:
     exp_duration_secs: 600 # 10 minutes
   refresh_token:
     exp_duration_secs: 2592000 # 30 days
+  default_token:
+    exp_duration_secs: 86400 # 1 day
 oauth:
   discord:
     auth_url: https://discord.com/api/oauth2/authorize?response_type=code
@@ -26,4 +36,4 @@ smtp:
   username: api
   mailbox:
     email: mailtrap@demomailtrap.com
-    name: "Private Person"
+    name: Sphinx
