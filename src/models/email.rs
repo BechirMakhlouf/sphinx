@@ -36,4 +36,8 @@ impl Email {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+    pub fn to_mailbox(&self) -> lettre::message::Mailbox {
+        let name = &self.0.split_once("@").unwrap().0.to_string();
+        lettre::message::Mailbox::new(Some(name.to_string()), self.0.parse().unwrap())
+    }
 }

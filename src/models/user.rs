@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::{email::Email, identity::Provider, password::EncryptedPassword};
 
@@ -12,15 +13,25 @@ impl ToString for Id {
         self.0.into()
     }
 }
+
 impl Id {
     pub fn as_uuid(&self) -> uuid::Uuid {
         self.0
     }
+
     pub fn new() -> Self {
         Self(uuid::Uuid::new_v4())
     }
-}
 
+    pub fn from_trusted_str(str: &str) -> Self {
+        Self(Uuid::try_from(str).unwrap())
+    }
+}
+impl From<uuid::Uuid> for Id {
+    fn from(value: uuid::Uuid) -> Self {
+        Self(value)
+    }
+}
 #[derive(Debug, Clone, Serialize, sqlx::FromRow, Deserialize)]
 pub struct User {
     pub id: Id,

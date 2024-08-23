@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use sqlx::PgPool;
+use sqlx::{postgres::PgQueryResult, PgPool};
 
 use crate::models::{
     email::Email,
@@ -10,6 +8,7 @@ use crate::models::{
 
 type Result<T> = std::result::Result<T, sqlx::Error>;
 
+#[derive(Debug, Clone)]
 pub struct UserRepository {
     db_pool: PgPool,
 }
@@ -17,6 +16,26 @@ impl UserRepository {
     pub fn new(db_pool: PgPool) -> Self {
         Self { db_pool }
     }
+
+    pub async fn update_user_password(
+        &self,
+        user_id: &user::Id,
+        new_password: &EncryptedPassword,
+    ) -> Result<PgQueryResult> {
+        Ok(sqlx::query!(
+            r#"
+            UPDATE auth.users 
+            SET 
+                encrypted_password = $1
+            WHERE
+                id = $2;"#,
+            new_password as &EncryptedPassword,
+            user_id as &user::Id
+        )
+        .execute(&self.db_pool)
+        .await?)
+    }
+
     pub async fn get_all_users(&self) -> Result<Vec<User>> {
         Ok(sqlx::query_as!(
             User,
@@ -61,6 +80,28 @@ impl UserRepository {
         .await?)
     }
 
+    pub async fn get_user_by_email(&self, email: &Email) -> Result<User> {
+        Ok(sqlx::query_as!(
+            User,
+            r#"
+            SELECT 
+                id as "id: user::Id",
+                email as "email: Email",
+                email_confirmed_at,
+                phone,
+                phone_confirmed_at,
+                encrypted_password as "encrypted_password: EncryptedPassword",
+                last_sign_in_at,
+                is_admin,
+                created_at,
+                updated_at
+             FROM auth.users
+             WHERE email = $1;"#,
+            &email as &Email
+        )
+        .fetch_one(&self.db_pool)
+        .await?)
+    }
     pub async fn add(&self, user: &User) -> Result<()> {
         sqlx::query!(
         r#"

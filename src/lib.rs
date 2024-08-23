@@ -1,3 +1,8 @@
+use axum::{
+    extract::{connect_info::IntoMakeServiceWithConnectInfo, ConnectInfo},
+    middleware::AddExtension,
+};
+
 pub mod authenticator;
 pub mod config;
 pub mod mailer;
@@ -22,13 +27,22 @@ pub fn init_tracing() {
 
 pub async fn configure_app(
     config: config::Config,
-) -> axum::serve::Serve<axum::Router, axum::Router> {
-    let app = axum::Router::new()
-        .with_state(config.database.get_db_pool())
-        .with_state(config.redis.get_async_connection().await)
-        .layer(tower_http::trace::TraceLayer::new_for_http())
-        .route("/health", axum::routing::get(routes::health::handler));
-    //.route("/sign-up", axum::routing::post(routes::sign_up::handler));
+) -> axum::serve::Serve<
+    IntoMakeServiceWithConnectInfo<axum::Router, std::net::SocketAddr>,
+    AddExtension<axum::Router, ConnectInfo<std::net::SocketAddr>>,
+> {
+    let repository = repositories::Repository::new(&config.database, &config.redis, &config.jwt);
+    let token_factory = models::token::TokenFactory::new(config.jwt);
+    let mailer = mailer::Mailer::new(config.smtp);
+
+    let authenticator = std::sync::Arc::new(authenticator::Authenticator::new(
+        repository,
+        token_factory,
+        mailer,
+        config.application.config,
+    ));
+
+    let app = routes::get_router(authenticator);
 
     let listener = tokio::net::TcpListener::bind(format!(
         "{}:{}",
@@ -38,5 +52,8 @@ pub async fn configure_app(
     .expect("failed to bind to port");
 
     tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app)
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
 }

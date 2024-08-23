@@ -1,6 +1,5 @@
 use oauth2::{basic::BasicClient, AuthUrl, ClientId, ClientSecret, RedirectUrl, TokenUrl};
 use secrecy::ExposeSecret;
-use serde::{Deserialize, Serialize};
 
 use crate::config::oauth;
 

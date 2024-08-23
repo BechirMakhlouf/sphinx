@@ -14,6 +14,7 @@ pub mod user;
 
 pub type Result<T> = std::result::Result<T, sqlx::Error>;
 
+#[derive(Debug, Clone)]
 pub struct Repository {
     pub auth: AuthRepository,
     pub identity: IdentityRepository,
@@ -24,9 +25,9 @@ pub struct Repository {
 
 impl Repository {
     pub fn new(
-        db_settings: config::database::Settings,
-        redis_settings: config::redis::Settings,
-        token_settings: config::jwt::Settings,
+        db_settings: &config::database::Settings,
+        redis_settings: &config::redis::Settings,
+        token_settings: &config::jwt::Settings,
     ) -> Self {
         let db_pool = db_settings.get_db_pool();
         let redis_client = redis_settings.get_client();

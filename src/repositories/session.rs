@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use sqlx::{types::ipnetwork::IpNetwork, PgPool};
 
 use super::Result;
@@ -8,6 +6,7 @@ use crate::models::{
     user,
 };
 
+#[derive(Debug, Clone)]
 pub struct SessionRepository {
     db_pool: PgPool,
 }

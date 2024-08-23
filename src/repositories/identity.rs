@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use sqlx::PgPool;
 
 use crate::models::{
@@ -11,6 +9,7 @@ use crate::models::{
 
 type Result<T> = std::result::Result<T, sqlx::Error>;
 
+#[derive(Debug, Clone)]
 pub struct IdentityRepository {
     db_pool: PgPool,
 }
@@ -70,8 +69,8 @@ impl IdentityRepository {
 
     pub async fn get_user_identity(
         &self,
-        user_id: user::Id,
-        provider: Provider,
+        user_id: &user::Id,
+        provider: &Provider,
     ) -> Result<Identity> {
         Ok(sqlx::query_as!(
             Identity,
@@ -92,8 +91,8 @@ impl IdentityRepository {
         WHERE
             user_id = $1 AND provider = $2;
             "#,
-            user_id as user::Id,
-            provider as Provider
+            user_id as &user::Id,
+            provider as &Provider
         )
         .fetch_one(&self.db_pool)
         .await?)
