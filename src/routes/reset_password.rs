@@ -65,7 +65,7 @@ pub async fn reset_password(
         .reset_password(&params.token, new_password)
         .await
     {
-        Ok(_) => "email confirmed".to_string().into_response(),
+        Ok(_) => "Password reset.".to_string().into_response(),
         Err(authenticator::Error::InvalidToken) => {
             (StatusCode::BAD_REQUEST, "Invalid token").into_response()
         }

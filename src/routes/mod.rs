@@ -25,6 +25,14 @@ pub fn get_router(
             "/confirm-email",
             axum::routing::get(confirm_email::confirm_email),
         )
+        .route(
+            "/reset-password",
+            axum::routing::get(reset_password::start_reset_password),
+        )
+        .route(
+            "/reset-password",
+            axum::routing::post(reset_password::reset_password),
+        )
         .layer(Extension(authenticator))
         .route("/health", axum::routing::get(health::handler))
 }

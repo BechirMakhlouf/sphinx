@@ -35,10 +35,11 @@ impl TokenRepository {
         &self,
         user_id: &user::Id,
         token_id: &str,
-    ) -> Result<(), redis::RedisError> {
+    ) -> Result<Option<String>, redis::RedisError> {
         let key = format!("reset_password:{}:{}", user_id.to_string(), token_id);
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
-        conn.del(key).await
+
+        conn.get_del(key).await
     }
 
     pub async fn store_refresh_token(

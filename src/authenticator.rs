@@ -10,7 +10,6 @@ use crate::{
         user::{self, User},
     },
     repositories::Repository,
-    routes::reset_password,
 };
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -55,12 +54,17 @@ impl Authenticator {
             config,
         }
     }
+
     pub async fn email_sign_up(
         &self,
         email: Email,
         password: Password,
         data: serde_json::Value,
     ) -> Result<user::Id> {
+        if let Ok(_) = self.repository.user.get_user_by_email(&email).await {
+            return Err(Error::EmailAlreadyUsed(email.to_string()));
+        }
+
         let user = User::new(email, Some(password.encrypt()));
 
         let identity = Identity::builder(
@@ -134,11 +138,11 @@ impl Authenticator {
         );
 
         let reset_password_url = self.create_reset_password_url(&token);
-
-        let _ = self
+        let v = self
             .mailer
             .send_reset_password(&user.email, &reset_password_url)
             .await;
+
         Ok(())
     }
 
@@ -165,14 +169,20 @@ impl Authenticator {
             }
         };
 
-        let _ = match self
+        //TODO: check if token exists in cache (token is already used)
+        match self
             .repository
             .token
             .remove_reset_password_token(&user_id, token_id.as_str())
             .await
         {
-            Ok(result) => Ok(result),
-            Err(err) => Err(Error::InternalError(err.to_string())),
+            Ok(Some(_)) => (),
+            Ok(None) => {
+                return Err(Error::InvalidToken);
+            }
+            Err(err) => {
+                return Err(Error::InternalError(err.to_string()));
+            }
         };
 
         match self
