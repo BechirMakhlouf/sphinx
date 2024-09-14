@@ -2,7 +2,7 @@
 
 CREATE TYPE auth_provider
 AS 
-ENUM('email', 'google', 'discord', 'apple', 'github');
+ENUM('google', 'discord', 'apple', 'github');
 
 CREATE TABLE IF NOT EXISTS auth.identities (
     user_id UUID NOT NULL,
