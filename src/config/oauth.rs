@@ -6,9 +6,10 @@ pub struct ProviderSettings {
     pub token_url: url::Url,
     pub redirect_url: url::Url,
 }
-
+//
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct Settings {
+    pub callback: url::Url,
     pub discord: Option<ProviderSettings>,
     pub google: Option<ProviderSettings>,
     pub apple: Option<ProviderSettings>,
