@@ -40,8 +40,8 @@ pub async fn github(
 
     let (auth_url, csrf_token) = oauth_client
         .authorize_url(CsrfToken::new_random)
-        .add_scope(Scope::new("read:user".to_string()))
-        .add_scope(Scope::new("read:email".to_string()))
+        //.add_scope(Scope::new("read:user".to_string()))
+        .add_scope(Scope::new("user:email".to_string()))
         .url();
 
     let mut session = Session::new();
@@ -69,39 +69,43 @@ pub async fn github(
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct User {
-    login: String,
+    login: Option<String>,
     id: u64,
-    node_id: String,
-    avatar_url: String,
-    gravatar_id: String,
-    url: String,
-    html_url: String,
-    site_admin: bool,
+    node_id: Option<String>,
+    avatar_url: Option<String>,
+    gravatar_id: Option<String>,
+    url: Option<String>,
+    html_url: Option<String>,
+    followers_url: Option<String>,
+    following_url: Option<String>,
+    gists_url: Option<String>,
+    starred_url: Option<String>,
+    verified_email: Option<bool>,
+    subscriptions_url: Option<String>,
+    organizations_url: Option<String>,
+    repos_url: Option<String>,
+    events_url: Option<String>,
+    received_events_url: Option<String>,
+    r#type: Option<String>,
+    site_admin: Option<bool>,
     name: Option<String>,
     company: Option<String>,
     blog: Option<String>,
     location: Option<String>,
     email: Option<String>,
-    verified_email: Option<bool>,
     hireable: Option<bool>,
     bio: Option<String>,
     twitter_username: Option<String>,
     notification_email: Option<String>,
-    public_repos: u32,
-    public_gists: u32,
-    followers: u32,
-    following: u32,
-    created_at: String,
-    updated_at: String,
-    private_gists: u32,
-    total_private_repos: u32,
-    owned_private_repos: u32,
-    disk_usage: u64,
-    collaborators: u32,
-    two_factor_authentication: bool,
+    public_repos: Option<u64>,
+    public_gists: Option<u64>,
+    followers: Option<u64>,
+    following: Option<u64>,
+    created_at: Option<String>,
+    updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 struct GithubEmail {
     email: String,
     primary: bool,
@@ -139,10 +143,9 @@ pub async fn callback(
         .send()
         .await
         .context("failed in sending request to target Url")?
-        //.json::<User>()
-        .text()
+        .json::<User>()
         .await
-        .context("failed to Deserialize to json")?;
+        .context("failed to Deserialize user_data to json")?;
 
     let user_emails = client
         .get("https://api.github.com/user/emails")
@@ -151,92 +154,90 @@ pub async fn callback(
         .send()
         .await
         .context("failed in sending request to target Url")?
-        //.json::<Vec<GithubEmail>>()
-        .text()
+        .json::<Vec<GithubEmail>>()
         .await
-        .context("failed to Deserialize to json")?;
+        .context("failed to Deserialize user_emails to json")?;
 
-    println!("hello world");
-    println!("emails: {user_emails:?}");
+    let main_email = user_emails
+        .into_iter()
+        .find(|email| email.primary && email.verified);
 
-    //let main_email = user_emails
-    //    .into_iter()
-    //    .find(|email| email.primary && email.verified);
+    //TODO: remove the clone please.
+    user_data.verified_email = Some(
+        main_email
+            .clone()
+            .with_context(|| "No verified and primary email attached to github account.")?
+            .verified
+            .clone(),
+    );
+
+    user_data.email = main_email.map(|e| e.email);
+
+    let user_identity = OrphanIdentity::builder(
+        user_data.id.to_string().clone(),
+        user_data
+            .email
+            .clone()
+            .context("a valid email is required.")?
+            .as_str()
+            .try_into()
+            .context("Invalid email attached to your github account.")?,
+        Provider::Github,
+    )
+    .is_email_confirmed(user_data.verified_email)
+    .provider_data(
+        serde_json::value::to_value(user_data.clone())
+            .context("failed to serialize user provider data")?,
+    )
+    .build();
+
+    let tokens = authenticator
+        .oauth_sign_in(user_identity, user_agent.as_str(), &addr.ip())
+        .await
+        .context("Trouble signing in with oauth")?;
+
+    let access_cookie = cookie::Cookie::build((ACCESS_TOKEN_NAME, tokens.access_jwt))
+        .path("/")
+        .same_site(cookie::SameSite::Lax)
+        .http_only(true)
+        .build();
+    let refresh_cookie = cookie::Cookie::build((REFRESH_TOKEN_NAME, tokens.refresh_jwt))
+        .path("/")
+        .same_site(cookie::SameSite::Lax)
+        .http_only(true)
+        .build();
     //
-    //user_data.verified_email = match &main_email {
-    //    Some(main_email) => Some(main_email.verified),
-    //    None => Some(false),
-    //};
+    let mut headers = HeaderMap::new();
+    headers.append(
+        SET_COOKIE,
+        format!("{};", refresh_cookie,)
+            .try_into()
+            .context("Trouble injecting cookie.")?,
+    );
+    headers.append(
+        SET_COOKIE,
+        format!("{};", access_cookie)
+            .try_into()
+            .context("Trouble injecting cookie.")?,
+    );
     //
-    //user_data.email = main_email.map(|e| e.email);
-
-    Ok(format!("{user_data:?}").into_response())
-
-    //let user_identity = OrphanIdentity::builder(
-    //    user_data.id.to_string().clone(),
-    //    user_data
-    //        .email
-    //        .clone()
-    //        .context("a valid email is required.")?
-    //        .as_str()
-    //        .try_into()
-    //        .context("Invalid email attached to your github account.")?,
-    //    Provider::Github,
-    //)
-    //.is_email_confirmed(user_data.verified_email)
-    //.provider_data(
-    //    serde_json::value::to_value(user_data.clone())
-    //        .context("failed to serialize user provider data")?,
-    //)
-    //.build();
-
-    //let tokens = authenticator
-    //    .oauth_sign_in(user_identity, user_agent.as_str(), &addr.ip())
-    //    .await
-    //    .context("Trouble signing in with oauth")?;
-
-    //let access_cookie = cookie::Cookie::build((ACCESS_TOKEN_NAME, tokens.access_jwt))
-    //    .path("/")
-    //    .same_site(cookie::SameSite::Lax)
-    //    .http_only(true)
-    //    .build();
-    //let refresh_cookie = cookie::Cookie::build((REFRESH_TOKEN_NAME, tokens.refresh_jwt))
-    //    .path("/")
-    //    .same_site(cookie::SameSite::Lax)
-    //    .http_only(true)
-    //    .build();
-    ////
-    //let mut headers = HeaderMap::new();
-    //headers.append(
-    //    SET_COOKIE,
-    //    format!("{};", refresh_cookie,)
-    //        .try_into()
-    //        .context("Trouble injecting cookie.")?,
-    //);
-    //headers.append(
-    //    SET_COOKIE,
-    //    format!("{};", access_cookie)
-    //        .try_into()
-    //        .context("Trouble injecting cookie.")?,
-    //);
-    ////
-    //let session_removal_cookie = cookie::Cookie::build((SESSION_COOKIE_NAME, ""))
-    //    .path("/")
-    //    .same_site(cookie::SameSite::Lax)
-    //    .max_age(Duration::from_secs(0).try_into().unwrap())
-    //    .http_only(true)
-    //    .build();
-    ////
-    //headers.append(
-    //    SET_COOKIE,
-    //    format!("{};", session_removal_cookie)
-    //        .try_into()
-    //        .context("Trouble injecting cookie.")?,
-    //);
-    ////
-    //Ok((
-    //    headers,
-    //    Redirect::to(authenticator.get_oauth_callback().as_ref()),
-    //)
-    //    .into_response())
+    let session_removal_cookie = cookie::Cookie::build((SESSION_COOKIE_NAME, ""))
+        .path("/")
+        .same_site(cookie::SameSite::Lax)
+        .max_age(Duration::from_secs(0).try_into().unwrap())
+        .http_only(true)
+        .build();
+    //
+    headers.append(
+        SET_COOKIE,
+        format!("{};", session_removal_cookie)
+            .try_into()
+            .context("Trouble injecting cookie.")?,
+    );
+    //
+    Ok((
+        headers,
+        Redirect::to(authenticator.get_oauth_callback().as_ref()),
+    )
+        .into_response())
 }
