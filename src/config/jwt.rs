@@ -1,4 +1,3 @@
-#![allow(unused)]
 use serde_aux::field_attributes::deserialize_number_from_string;
 
 #[derive(Debug, Clone, serde::Deserialize)]

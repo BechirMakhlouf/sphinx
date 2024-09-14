@@ -1,5 +1,3 @@
-#![allow(unused_variables)]
-
 use secrecy::ExposeSecret;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
