@@ -1,14 +1,19 @@
+use chrono::Utc;
+use oauth2::basic::BasicClient;
+use std::collections::HashMap;
+
 use crate::{
     config,
     mailer::Mailer,
     models::{
         email::Email,
-        identity::{self, Identity},
+        identity::{Identity, OrphanIdentity, Provider},
         password::Password,
         session::{self, Session},
         token::{AuthTokens, TokenClaims, TokenFactory, TokenType},
         user::{self, User},
     },
+    oauth::get_oauth_clients,
     repositories::Repository,
 };
 
@@ -38,6 +43,8 @@ pub struct Authenticator {
     token_factory: TokenFactory,
     mailer: Mailer,
     config: config::application::Config,
+    oauth_clients: HashMap<Provider, BasicClient>,
+    oauth_config: config::oauth::Settings,
 }
 
 impl Authenticator {
@@ -46,37 +53,34 @@ impl Authenticator {
         token_factory: TokenFactory,
         mailer: Mailer,
         config: config::application::Config,
+        oauth_config: config::oauth::Settings,
     ) -> Self {
         Self {
             repository,
             token_factory,
             mailer,
             config,
+            oauth_clients: get_oauth_clients(&oauth_config),
+            oauth_config,
         }
     }
+    pub fn get_oauth_client(&self, oauth_provider: Provider) -> Option<&BasicClient> {
+        self.oauth_clients.get(&oauth_provider)
+    }
+    pub fn get_oauth_callback(&self) -> &url::Url {
+        &self.oauth_config.callback
+    }
+    pub fn get_confirm_email_callback(&self) -> &url::Url {
+        &self.config.confirm_email.callback
+    }
 
-    pub async fn email_sign_up(
-        &self,
-        email: Email,
-        password: Password,
-        data: serde_json::Value,
-    ) -> Result<user::Id> {
+    pub async fn email_sign_up(&self, email: Email, password: Password) -> Result<user::Id> {
         if let Ok(_) = self.repository.user.get_user_by_email(&email).await {
             return Err(Error::EmailAlreadyUsed(email.to_string()));
         }
 
         let user = User::new(email, Some(password.encrypt()));
-
-        let identity = Identity::builder(
-            user.id.clone(),
-            user.id.to_string(),
-            user.email.clone(),
-            identity::Provider::Email,
-        )
-        .provider_data(data)
-        .build();
-
-        let email = identity.email.clone();
+        let email = user.email.clone();
 
         match self.repository.user.add(&user).await {
             Err(sqlx::Error::Database(err)) => match err.kind() {
@@ -89,18 +93,7 @@ impl Authenticator {
             Ok(()) => (),
         };
 
-        match self.repository.identity.add(identity).await {
-            Err(sqlx::Error::Database(err)) => match err.kind() {
-                sqlx::error::ErrorKind::UniqueViolation => {
-                    return Err(Error::EmailAlreadyUsed(email.to_string()))
-                }
-                _ => return Err(Error::InternalError(err.to_string())),
-            },
-            Err(err) => return Err(Error::InternalError(err.to_string())),
-            Ok(()) => (),
-        };
         let confirm_email_url = self.create_confirm_email_url(&user.id);
-
         //TODO: handle errors in email sending
         let _ = self
             .mailer
@@ -138,7 +131,9 @@ impl Authenticator {
         );
 
         let reset_password_url = self.create_reset_password_url(&token);
-        let v = self
+
+        //TODO: HANDLE ERROR HERE
+        let _ = self
             .mailer
             .send_reset_password(&user.email, &reset_password_url)
             .await;
@@ -195,6 +190,7 @@ impl Authenticator {
             Err(err) => Err(Error::InternalError(err.to_string())),
         }
     }
+
     fn create_confirm_email_url(&self, user_id: &user::Id) -> url::Url {
         let token = self.token_factory.create_token(
             TokenType::ConfirmEmail,
@@ -249,10 +245,6 @@ impl Authenticator {
             Err(err) => return Err(Error::InternalError(err.to_string())),
         };
 
-        if user.email_confirmed_at.is_none() && !self.config.allow_unverified {
-            return Err(Error::NotVerifiedAccount(user.email.to_string()));
-        }
-
         match user.encrypted_password {
             Some(encrypted_password) => {
                 if !encrypted_password.compare_with(&password) {
@@ -262,37 +254,42 @@ impl Authenticator {
             None => return Err(Error::InvalidCredentials),
         }
 
-        let session = Session::new(user.id.clone(), user_agent, ip_addr);
+        if user.email_confirmed_at.is_none() && !self.config.allow_unverified {
+            return Err(Error::NotVerifiedAccount(user.email.to_string()));
+        }
+
+        self.create_user_session(&user.id, &user_agent, &ip_addr, &None)
+            .await
+    }
+
+    pub async fn create_user_session(
+        &self,
+        user_id: &user::Id,
+        user_agent: &str,
+        ip_addr: &std::net::IpAddr,
+        data: &Option<serde_json::Value>,
+    ) -> Result<AuthTokens> {
+        //TODO: change this
+        let session = Session::new(user_id.clone(), user_agent.to_string(), ip_addr.clone());
 
         //TODO: HANDLE FAILURE HERE
         let _ = self.repository.session.add_session(&session).await;
 
-        let identity = match self
-            .repository
-            .identity
-            .get_user_identity(&user.id, &identity::Provider::Email)
-            .await
-        {
-            Ok(data) => data,
-            Err(sqlx::Error::RowNotFound) => return Err(Error::InvalidCredentials),
-            Err(err) => return Err(Error::InternalError(err.to_string())),
-        };
-
         let access_jwt = self.token_factory.create_access_token(
-            user.id.clone().as_uuid(),
+            user_id.clone().as_uuid(),
             session.id.clone().as_uuid(),
-            Some(identity.provider_data),
+            data.clone(),
         );
 
         let refresh_jwt = self
             .token_factory
-            .create_refresh_token(user.id.clone().as_uuid(), session.id.clone().as_uuid());
+            .create_refresh_token(user_id.clone().as_uuid(), session.id.clone().as_uuid());
 
         //TODO: HANDLE FAILURE HERE:
         let _ = self
             .repository
             .token
-            .store_refresh_token(&user.id, &session.id.as_uuid())
+            .store_refresh_token(&user_id, &session.id.as_uuid())
             .await;
 
         Ok(AuthTokens::new(access_jwt, refresh_jwt))
@@ -308,5 +305,83 @@ impl Authenticator {
             Ok(result) => Ok(result),
             Err(err) => Err(Error::InternalError(err.to_string())),
         }
+    }
+
+    pub async fn add_or_link_identity(&self, new_identity: OrphanIdentity) -> Result<Identity> {
+        let user = match self
+            .repository
+            .user
+            .get_user_by_email(&new_identity.email)
+            .await
+        {
+            Ok(user) => Some(user),
+            Err(sqlx::Error::RowNotFound) => None,
+            Err(err) => return Err(Error::InternalError(err.to_string())),
+        };
+
+        match user {
+            None => {
+                let user = user::User::builder(new_identity.email.clone())
+                    .email_confirmed_at(if let Some(true) = new_identity.is_email_confirmed {
+                        Some(Utc::now())
+                    } else {
+                        None
+                    })
+                    .build();
+
+                match self.repository.user.add(&user).await {
+                    Ok(()) => (),
+                    Err(err) => return Err(Error::InternalError(err.to_string())),
+                };
+
+                let identity = new_identity.to_identity(user.id.clone());
+
+                match self.repository.identity.upsert_identity(&identity).await {
+                    Ok(_result) => (),
+                    Err(err) => return Err(Error::InternalError(err.to_string())),
+                };
+                Ok(identity)
+            }
+
+            Some(user) => {
+                let identity = new_identity.to_identity(user.id.clone());
+                match self.repository.identity.upsert_identity(&identity).await {
+                    Ok(_result) => (),
+                    Err(err) => return Err(Error::InternalError(err.to_string())),
+                };
+                Ok(identity)
+            }
+        }
+    }
+
+    pub async fn oauth_sign_in(
+        &self,
+        identity: OrphanIdentity,
+        user_agent: &str,
+        ip_addr: &std::net::IpAddr,
+    ) -> Result<AuthTokens> {
+        let identity = match self
+            .repository
+            .identity
+            .get_user_identity(&identity.provider, &identity.provider_user_id)
+            .await
+        {
+            Ok(identity) => identity,
+            Err(sqlx::Error::RowNotFound) => self
+                .add_or_link_identity(identity)
+                .await
+                .map_err(|err| Error::InternalError(err.to_string()))?,
+            Err(err) => {
+                return Err(Error::InternalError(err.to_string()));
+            }
+        };
+
+        self.create_user_session(
+            &identity.user_id,
+            user_agent,
+            ip_addr,
+            &Some(identity.provider_data),
+        )
+        .await
     }
 }
