@@ -22,7 +22,7 @@ impl UserRepository {
         user_id: &user::Id,
         new_password: &EncryptedPassword,
     ) -> Result<PgQueryResult> {
-        Ok(sqlx::query!(
+        sqlx::query!(
             r#"
             UPDATE auth.users 
             SET 
@@ -33,11 +33,11 @@ impl UserRepository {
             user_id as &user::Id
         )
         .execute(&self.db_pool)
-        .await?)
+        .await
     }
 
     pub async fn get_all_users(&self) -> Result<Vec<User>> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             User,
             r#"
             SELECT 
@@ -54,11 +54,11 @@ impl UserRepository {
              FROM auth.users;"#
         )
         .fetch_all(&self.db_pool)
-        .await?)
+        .await
     }
 
     pub async fn get_user_by_id(&self, user_id: user::Id) -> Result<Option<User>> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             User,
             r#"
             SELECT 
@@ -77,11 +77,11 @@ impl UserRepository {
             user_id.as_uuid()
         )
         .fetch_optional(&self.db_pool)
-        .await?)
+        .await
     }
 
     pub async fn get_user_by_email(&self, email: &Email) -> Result<User> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             User,
             r#"
             SELECT 
@@ -100,7 +100,7 @@ impl UserRepository {
             &email as &Email
         )
         .fetch_one(&self.db_pool)
-        .await?)
+        .await
     }
     pub async fn add(&self, user: &User) -> Result<()> {
         sqlx::query!(
@@ -110,17 +110,19 @@ impl UserRepository {
         VALUES
         ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     "#,
-        &user.id as &user::Id,
-        &user.email as &Email,
-        user.email_confirmed_at,
-        user.phone,
-        user.phone_confirmed_at,
-        &user.encrypted_password as &Option<EncryptedPassword>,
-        user.last_sign_in_at,
-        user.is_admin,
-        user.created_at,
-        user.updated_at
-    ).execute(&self.db_pool).await?;
+
+            &user.id as &user::Id,
+            &user.email as &Email,
+            user.email_confirmed_at,
+            user.phone,
+            user.phone_confirmed_at,
+            &user.encrypted_password as &Option<EncryptedPassword>,
+            user.last_sign_in_at,
+            user.is_admin,
+            user.created_at,
+            user.updated_at
+
+        ).execute(&self.db_pool).await?;
 
         Ok(())
     }

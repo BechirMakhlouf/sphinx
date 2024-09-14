@@ -1,10 +1,9 @@
-use sqlx::PgPool;
+use sqlx::{postgres::PgQueryResult, PgPool};
 
 use crate::models::{
     email::Email,
     identity::{Identity, Provider},
-    password::EncryptedPassword,
-    user::{self, AuthenticatedData},
+    user::{self},
 };
 
 type Result<T> = std::result::Result<T, sqlx::Error>;
@@ -19,7 +18,7 @@ impl IdentityRepository {
         Self { db_pool }
     }
     pub async fn get_user_identities(&self, user_id: user::Id) -> Result<Vec<Identity>> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             Identity,
             r#"
             SELECT
@@ -41,7 +40,7 @@ impl IdentityRepository {
             user_id.as_uuid()
         )
         .fetch_all(&self.db_pool)
-        .await?)
+        .await
     }
 
     pub async fn add(&self, identity: Identity) -> Result<()> {
@@ -63,16 +62,15 @@ impl IdentityRepository {
         identity.created_at,
         identity.updated_at
     ).execute(&self.db_pool).await?;
-
         Ok(())
     }
 
     pub async fn get_user_identity(
         &self,
-        user_id: &user::Id,
         provider: &Provider,
+        provider_user_id: &str,
     ) -> Result<Identity> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             Identity,
             r#"
         SELECT
@@ -89,39 +87,76 @@ impl IdentityRepository {
         FROM 
             auth.identities
         WHERE
-            user_id = $1 AND provider = $2;
+            provider = $1 AND provider_user_id = $2;
             "#,
-            user_id as &user::Id,
-            provider as &Provider
+            provider as &Provider,
+            provider_user_id
         )
         .fetch_one(&self.db_pool)
-        .await?)
+        .await
     }
 
-    pub async fn get_user_info_from_email_password(
-        &self,
-        email: Email,
-        encrypted_password: EncryptedPassword,
-    ) -> Result<AuthenticatedData> {
-        Ok(sqlx::query_as!(
-                    AuthenticatedData,
-                    r#"
-                SELECT
-                    user_id as "user_id: user::Id", 
-                    auth.users.email as "email: Email", 
-                    auth.users.phone,
-                    provider AS "provider: Provider",
-                    provider_data,
-                    is_admin
-                FROM auth.users
-                JOIN auth.identities on auth.users.id = auth.identities.user_id
-                WHERE auth.identities.provider = $1 AND encrypted_password = $2 AND auth.users.email = $3;
-            "#,
-                    Provider::Email as Provider,
-                    encrypted_password as EncryptedPassword,
-                    email as Email,
-                )
-                .fetch_one(&self.db_pool)
-                .await?)
+    pub async fn update_identity(&self, identity: &Identity) -> Result<PgQueryResult> {
+        sqlx::query!(
+            "
+        UPDATE auth.identities
+        SET 
+            provider_data = $1,
+            email = $2,
+            is_email_confirmed = $3,
+            phone = $4,
+            is_phone_confirmed = $5
+        WHERE 
+            provider = $6 AND provider_user_id = $7
+        ",
+            identity.provider_data,
+            &identity.email as &Email,
+            identity.is_email_confirmed,
+            identity.phone,
+            identity.is_phone_confirmed,
+            &identity.provider as &Provider,
+            identity.provider_user_id,
+        )
+        .execute(&self.db_pool)
+        .await
+    }
+
+    pub async fn upsert_identity(&self, identity: &Identity) -> Result<PgQueryResult> {
+        sqlx::query!(
+            "
+            INSERT INTO auth.identities (
+                user_id, 
+                provider, 
+                provider_user_id, 
+                provider_data, 
+                email, 
+                is_email_confirmed, 
+                phone, 
+                is_phone_confirmed, 
+                created_at, 
+                updated_at
+            ) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (provider, provider_user_id) 
+            DO UPDATE SET 
+                provider_data = EXCLUDED.provider_data,
+                email = EXCLUDED.email,
+                is_email_confirmed = EXCLUDED.is_email_confirmed,
+                phone = EXCLUDED.phone,
+                is_phone_confirmed = EXCLUDED.is_phone_confirmed
+        ",
+            &identity.user_id as &user::Id,
+            &identity.provider as &Provider,
+            identity.provider_user_id,
+            identity.provider_data,
+            &identity.email as &Email,
+            identity.is_email_confirmed,
+            identity.phone,
+            identity.is_phone_confirmed,
+            identity.created_at,
+            identity.updated_at
+        )
+        .execute(&self.db_pool)
+        .await
     }
 }
