@@ -13,7 +13,7 @@ your auth needs when developing new projects.
 - [X] Email/password login
 - [X] Verify email
 - [X] Reset-password 
-- [ ] Oauth login
+- [X] Oauth login
 - [ ] OTPs
 - [ ] Magic links
 - [ ] Multi factor authentication
