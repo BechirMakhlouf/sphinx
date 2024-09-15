@@ -27,7 +27,7 @@ jwt:
   default_token:
     exp_duration_secs: 86400 # 1 day
 oauth:
-  callback: http://0.0.0.0:3333/
+  callback: http://localhost:3333/
   discord:
     auth_url: https://discord.com/api/oauth2/authorize?response_type=code
     token_url: https://discord.com/api/oauth2/token
