@@ -1,9 +1,9 @@
-pub mod confirm_email;
-pub mod email_auth;
-pub mod health;
-pub mod oauth;
-pub mod reset_password;
-pub mod sign_out;
+mod confirm_email;
+mod email_auth;
+mod health;
+mod oauth;
+mod reset_password;
+mod sign_out;
 
 pub fn get_router(
     authenticator: std::sync::Arc<crate::authenticator::Authenticator>,
@@ -26,7 +26,7 @@ pub fn get_router(
         .route(
             "/reset-password",
             axum::routing::get(reset_password::start_reset_password)
-                .post(reset_password::start_reset_password),
+                .post(reset_password::reset_password),
         )
         .nest("/oauth", oauth::get_router())
         //TODO: CHANGE TO APP STATE
