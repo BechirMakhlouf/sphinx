@@ -75,7 +75,7 @@ impl Authenticator {
     }
 
     pub async fn email_sign_up(&self, email: Email, password: Password) -> Result<user::Id> {
-        if let Ok(_) = self.repository.user.get_user_by_email(&email).await {
+        if self.repository.user.get_user_by_email(&email).await.is_ok() {
             return Err(Error::EmailAlreadyUsed(email.to_string()));
         }
 
@@ -105,7 +105,7 @@ impl Authenticator {
 
     /// creates a reset-password token, persists it in redis cache and sends and email.
     pub async fn intiate_reset_password(&self, email: &Email) -> Result<()> {
-        let user = match self.repository.user.get_user_by_email(&email).await {
+        let user = match self.repository.user.get_user_by_email(email).await {
             Ok(data) => data,
             Err(sqlx::Error::RowNotFound) => return Err(Error::InvalidCredentials),
             Err(err) => return Err(Error::InternalError(err.to_string())),
@@ -199,11 +199,7 @@ impl Authenticator {
             None,
         );
 
-        let url_string = format!(
-            "{}?token={}",
-            self.config.confirm_email.callback.to_string(),
-            token
-        );
+        let url_string = format!("{}?token={}", self.config.confirm_email.callback, token);
 
         url::Url::parse(url_string.as_str()).unwrap()
     }
@@ -270,7 +266,7 @@ impl Authenticator {
         data: &Option<serde_json::Value>,
     ) -> Result<AuthTokens> {
         //TODO: change this
-        let session = Session::new(user_id.clone(), user_agent.to_string(), ip_addr.clone());
+        let session = Session::new(user_id.clone(), user_agent.to_string(), *ip_addr);
 
         //TODO: HANDLE FAILURE HERE
         let _ = self.repository.session.add_session(&session).await;
@@ -289,7 +285,7 @@ impl Authenticator {
         let _ = self
             .repository
             .token
-            .store_refresh_token(&user_id, &session.id.as_uuid())
+            .store_refresh_token(user_id, &session.id.as_uuid())
             .await;
 
         Ok(AuthTokens::new(access_jwt, refresh_jwt))
@@ -299,7 +295,7 @@ impl Authenticator {
         match self
             .repository
             .token
-            .delete_refresh_token(&user_id, &session_id)
+            .delete_refresh_token(user_id, session_id)
             .await
         {
             Ok(result) => Ok(result),

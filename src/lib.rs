@@ -30,7 +30,8 @@ pub async fn configure_app(
     IntoMakeServiceWithConnectInfo<axum::Router, std::net::SocketAddr>,
     AddExtension<axum::Router, ConnectInfo<std::net::SocketAddr>>,
 > {
-    let repository = repositories::Repository::new(&config.database, &config.redis, &config.jwt);
+    let repository =
+        repositories::Repository::new(&config.database, &config.redis, &config.jwt).await;
     let token_factory = models::token::TokenFactory::new(config.jwt);
     let mailer = mailer::Mailer::new(config.smtp);
     let authenticator = std::sync::Arc::new(authenticator::Authenticator::new(

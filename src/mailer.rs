@@ -31,7 +31,7 @@ impl Mailer {
             .to(recipient.to_mailbox())
             .subject("Confirm Email")
             .header(lettre::message::header::ContentType::TEXT_PLAIN)
-            .body(String::from(format!("Confirm your Email: {}", link)))
+            .body(format!("Confirm your Email: {}", link))
             .unwrap();
 
         match self.smtp_transport.send(email).await {
@@ -46,7 +46,7 @@ impl Mailer {
             .to(recipient.to_mailbox())
             .subject("Reset Password")
             .header(lettre::message::header::ContentType::TEXT_PLAIN)
-            .body(String::from(format!("Reset your Password: {}", link)))
+            .body(format!("Reset your Password: {}", link))
             .unwrap();
 
         match self.smtp_transport.send(email).await {

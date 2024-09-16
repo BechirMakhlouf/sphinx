@@ -1,12 +1,14 @@
+use std::fmt::Display;
+
 use super::user;
 
 #[derive(Debug, Default, Clone, PartialEq, serde::Serialize, serde::Deserialize, sqlx::Type)]
 #[sqlx(transparent)]
 pub struct Id(uuid::Uuid);
 
-impl ToString for Id {
-    fn to_string(&self) -> String {
-        self.0.into()
+impl Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

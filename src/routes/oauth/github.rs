@@ -167,8 +167,7 @@ pub async fn callback(
         main_email
             .clone()
             .with_context(|| "No verified and primary email attached to github account.")?
-            .verified
-            .clone(),
+            .verified,
     );
 
     user_data.email = main_email.map(|e| e.email);

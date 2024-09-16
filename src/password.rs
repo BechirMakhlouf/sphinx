@@ -19,7 +19,7 @@ impl PasswordHandler<'_> {
     pub fn verify_password(&self, password: &str, encrypted_password: &str) -> bool {
         use argon2::PasswordVerifier;
 
-        let parsed_hash = argon2::PasswordHash::new(&encrypted_password).unwrap();
+        let parsed_hash = argon2::PasswordHash::new(encrypted_password).unwrap();
 
         self.argon2
             .verify_password(password.as_bytes(), &parsed_hash)

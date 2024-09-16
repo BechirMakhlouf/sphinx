@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 
@@ -46,7 +48,7 @@ impl TryFrom<&str> for EncryptedPassword {
     fn try_from(encrypted_password: &str) -> Result<Self> {
         use argon2::PasswordVerifier;
 
-        let parsed_hash = argon2::PasswordHash::new(&encrypted_password).unwrap();
+        let parsed_hash = argon2::PasswordHash::new(encrypted_password).unwrap();
 
         match argon2::Argon2::default().verify_password(encrypted_password.as_bytes(), &parsed_hash)
         {
@@ -55,9 +57,10 @@ impl TryFrom<&str> for EncryptedPassword {
         }
     }
 }
-impl ToString for EncryptedPassword {
-    fn to_string(&self) -> String {
-        self.0.clone()
+
+impl Display for EncryptedPassword {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

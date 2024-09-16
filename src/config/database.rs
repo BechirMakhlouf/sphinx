@@ -25,7 +25,7 @@ impl Settings {
             .host(&self.host)
             .port(self.port)
             .username(&self.user)
-            .password(&self.password.expose_secret())
+            .password(self.password.expose_secret())
             .database(&self.name)
             .ssl_mode(ssl_mode);
 

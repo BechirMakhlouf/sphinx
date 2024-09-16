@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -8,9 +10,9 @@ use super::{email::Email, identity::Provider, password::EncryptedPassword};
 #[sqlx(transparent)]
 pub struct Id(uuid::Uuid);
 
-impl ToString for Id {
-    fn to_string(&self) -> String {
-        self.0.into()
+impl Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

@@ -24,13 +24,15 @@ pub struct Repository {
 }
 
 impl Repository {
-    pub fn new(
+    pub async fn new(
         db_settings: &config::database::Settings,
         redis_settings: &config::redis::Settings,
         token_settings: &config::jwt::Settings,
     ) -> Self {
         let db_pool = db_settings.get_db_pool();
         let redis_client = redis_settings.get_client();
+
+        let _ = sqlx::migrate!().run(&db_pool).await;
 
         Self {
             auth: AuthRepository::new(db_pool.clone()),

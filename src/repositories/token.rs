@@ -26,7 +26,7 @@ impl TokenRepository {
     ) -> Result<(), redis::RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
 
-        let key = format!("reset_password:{}:{}", user_id.to_string(), token_id);
+        let key = format!("reset_password:{}:{}", user_id, token_id);
 
         conn.set_ex(key, "", expiry_secs).await
     }
@@ -36,7 +36,7 @@ impl TokenRepository {
         user_id: &user::Id,
         token_id: &str,
     ) -> Result<Option<String>, redis::RedisError> {
-        let key = format!("reset_password:{}:{}", user_id.to_string(), token_id);
+        let key = format!("reset_password:{}:{}", user_id, token_id);
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
 
         conn.get_del(key).await
@@ -49,12 +49,7 @@ impl TokenRepository {
     ) -> Result<(), redis::RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
 
-        let key = format!(
-            "{}:{}:{}",
-            REFRESH_TOKEN_NAME,
-            user_id.to_string(),
-            token_id
-        );
+        let key = format!("{}:{}:{}", REFRESH_TOKEN_NAME, user_id, token_id);
 
         conn.set_ex(key, "", self.refresh_token_expiry_secs).await
     }
@@ -66,12 +61,7 @@ impl TokenRepository {
     ) -> Result<bool, RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
 
-        let key = format!(
-            "{}:{}:{}",
-            REFRESH_TOKEN_NAME,
-            user_id.to_string(),
-            session_id,
-        );
+        let key = format!("{}:{}:{}", REFRESH_TOKEN_NAME, user_id, session_id,);
 
         conn.exists(key).await
     }
@@ -82,12 +72,7 @@ impl TokenRepository {
         session_id: &session::Id,
     ) -> Result<bool, RedisError> {
         let mut conn = self.redis_client.get_multiplexed_async_connection().await?;
-        let key = format!(
-            "{}:{}:{}",
-            REFRESH_TOKEN_NAME,
-            user_id.to_string(),
-            session_id.to_string()
-        );
+        let key = format!("{}:{}:{}", REFRESH_TOKEN_NAME, user_id, session_id);
 
         conn.del::<String, bool>(key).await
     }

@@ -11,6 +11,7 @@ use crate::authenticator::{self, Authenticator};
 pub struct Params {
     token: String,
 }
+
 pub async fn confirm_email(
     Extension(authenticator): Extension<std::sync::Arc<Authenticator>>,
     params: Query<Params>,

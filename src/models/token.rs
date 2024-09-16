@@ -164,7 +164,7 @@ impl TokenFactory {
         exp: Option<u64>,
         jti: Option<String>,
     ) -> String {
-        let claims = self.create_token_claims(token_type, sub.into(), exp, jti);
+        let claims = self.create_token_claims(token_type, sub, exp, jti);
         self.encode_token(&claims)
     }
 

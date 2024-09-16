@@ -92,11 +92,13 @@ pub async fn sign_in_email(
     {
         Ok(auth_tokens) => {
             let access_cookie = cookie::Cookie::build((ACCESS_TOKEN_NAME, auth_tokens.access_jwt))
+                .path("/")
                 .same_site(cookie::SameSite::Lax)
                 .http_only(true)
                 .build();
             let refresh_cookie =
                 cookie::Cookie::build((REFRESH_TOKEN_NAME, auth_tokens.refresh_jwt))
+                    .path("/")
                     .same_site(cookie::SameSite::Lax)
                     .http_only(true)
                     .build();

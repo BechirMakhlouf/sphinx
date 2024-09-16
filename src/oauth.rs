@@ -23,16 +23,16 @@ pub fn get_oauth_clients(
     let mut clients: HashMap<Provider, BasicClient> = HashMap::new();
 
     if let Some(discord) = &settings.discord {
-        clients.insert(Provider::Discord, oauth_client(&discord));
+        clients.insert(Provider::Discord, oauth_client(discord));
     };
     if let Some(github) = &settings.github {
-        clients.insert(Provider::Github, oauth_client(&github));
+        clients.insert(Provider::Github, oauth_client(github));
     };
     if let Some(apple) = &settings.apple {
-        clients.insert(Provider::Apple, oauth_client(&apple));
+        clients.insert(Provider::Apple, oauth_client(apple));
     };
     if let Some(google) = &settings.google {
-        clients.insert(Provider::Google, oauth_client(&google));
+        clients.insert(Provider::Google, oauth_client(google));
     };
 
     clients
