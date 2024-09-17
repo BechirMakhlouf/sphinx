@@ -1,32 +1,36 @@
 services:
   sphinx:
     build: .
+    # image: sphinx:latest
     container_name: sphinx-server
     ports:
       - ${SPHINX_APPLICATION__PORT:-3333}:${SPHINX_APPLICATION__PORT:-3333}
     environment:
-      # sphinx 
-      SPHINX_APPLICATION__HOST: ${SPHINX_APPLICATION__HOST:-0.0.0.0}
-      SPHINX_APPLICATION__PORT: ${SPHINX_APPLICATION__PORT:-3333}
-      # database
-      SPHINX_DATABASE__PASSWORD: ${SPHINX_DATABASE__PASSWORD:-password}
-      SPHINX_DATABASE__USER: ${SPHINX_DATABASE__USER:-postgres}
-      SPHINX_DATABASE__PORT: ${SPHINX_DATABASE__PORT:-5432}
-      SPHINX_DATABASE__HOST: ${SPHINX_DATABASE__HOST:-localhost}
-      SPHINX_DATABASE__NAME: ${SPHINX__DATABASE_NAME:-postgres}
-      SPHINX_DATABASE__REQUIRE_SSL: ${SPHINX_DATABASE__REQUIRE_SSL:-false}
-      SPHINX_REDIS__URL: ${SPHINX_REDIS__URL:-redis://127.0.0.1:6379}
-    healthcheck:
-      test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+      SQLX_OFFLINE: true
+      SPHINX_DATABASE__HOST: sphinx-db
+      SPHINX_REDIS__URL: redis://sphinx-redis:6379
+    # healthcheck:
+    #   test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
+    #   interval: 5s
+    #   timeout: 5s
+    #   retries: 10
+    # healthcheck:
+    #   # test: curl --fail http://sphinx-server:3333/health || exit 1
+    #   test: "curl -f http://localhost:3333/health"
+    #   interval: 1s
+    #   # timeout: 30s
+    #   retries: 1 
+    #   start_period: 60s
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./.env:/app/.env
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
   db:
+    container_name: sphinx-db
     image: postgres:latest
     environment:
       POSTGRES_PASSWORD: ${SPHINX_DATABASE__PASSWORD:-password}
@@ -39,8 +43,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # ports:
+      # - 5432:5432
+
   redis:
+    container_name: sphinx-redis
     image: redis:latest
+    # ports:
+      # - 6379:6379
     healthcheck:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 5s
