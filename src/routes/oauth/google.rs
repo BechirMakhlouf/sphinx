@@ -28,7 +28,6 @@ use crate::{
     routes::AppError,
 };
 
-//TODO: VALIDATE THE CSRF TOKENS
 pub async fn google(
     Extension(authenticator): Extension<std::sync::Arc<Authenticator>>,
     Extension(store): Extension<MemoryStore>,
