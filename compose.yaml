@@ -1,7 +1,6 @@
 services:
   sphinx:
     build: .
-    # image: sphinx:latest
     container_name: sphinx-server
     ports:
       - ${SPHINX_APPLICATION__PORT:-3333}:${SPHINX_APPLICATION__PORT:-3333}
@@ -9,6 +8,7 @@ services:
       SQLX_OFFLINE: true
       SPHINX_DATABASE__HOST: sphinx-db
       SPHINX_REDIS__URL: redis://sphinx-redis:6379
+
     # healthcheck:
     #   test: ["CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://localhost:3333/health"]
     #   interval: 5s

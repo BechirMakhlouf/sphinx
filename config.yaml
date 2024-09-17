@@ -2,12 +2,12 @@ application:
   host: 0.0.0.0
   port: 3333
   config: 
-    allow_unverified: false
+    allow_unverified: true
     reset_password:
       callback: http://0.0.0.0:3333/reset-password/callback
       token_expiration_secs: 3600
     confirm_email:
-      callback: http://0.0.0.0:3333/verify-email/callback
+      callback: http://0.0.0.0:3333/confirm-email/callback
       token_expiration_secs: 3600
 database:
   user: postgres
