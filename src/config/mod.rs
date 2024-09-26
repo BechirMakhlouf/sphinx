@@ -2,6 +2,7 @@ pub mod application;
 pub mod database;
 pub mod jwt;
 pub mod oauth;
+pub mod otp;
 pub mod redis;
 pub mod smtp;
 
@@ -14,6 +15,7 @@ pub struct Config {
     pub redis: redis::Settings,
     pub jwt: jwt::Settings,
     pub oauth: oauth::Settings,
+    pub otp: otp::Settings,
     pub smtp: smtp::Settings,
 }
 

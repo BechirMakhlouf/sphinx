@@ -26,6 +26,9 @@ jwt:
     exp_duration_secs: 2592000 # 30 days
   default_token:
     exp_duration_secs: 86400 # 1 day
+otp:
+  password_digits_number: 6
+  exp_duration_secs: 600 # 10 minutes
 oauth:
   callback: http://localhost:3333/
   discord:
