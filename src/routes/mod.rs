@@ -9,7 +9,6 @@ pub fn get_router(
     authenticator: std::sync::Arc<crate::authenticator::Authenticator>,
 ) -> axum::Router {
     axum::Router::new()
-        .layer(tower_http::trace::TraceLayer::new_for_http())
         .route(
             "/sign-up/email",
             axum::routing::post(email_auth::sign_up_email),
@@ -28,10 +27,12 @@ pub fn get_router(
             axum::routing::get(reset_password::start_reset_password)
                 .post(reset_password::reset_password),
         )
+        //.route("/user", axum::routing::delete())
         .nest("/oauth", oauth::get_router())
         //TODO: CHANGE TO APP STATE
         .layer(axum::Extension(authenticator))
         .route("/health", axum::routing::get(health::handler))
+        .layer(tower_http::trace::TraceLayer::new_for_http())
 }
 
 //pub type HandlerResponse = Result<impl IntoResponse, AppError>

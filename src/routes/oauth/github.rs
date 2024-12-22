@@ -165,7 +165,7 @@ pub async fn callback(
     user_data.verified_email = Some(
         main_email
             .clone()
-            .with_context(|| "No verified and primary email attached to github account.")?
+            .with_context(|| "No verified primary email attached to github account.")?
             .verified,
     );
 
@@ -225,14 +225,14 @@ pub async fn callback(
         .max_age(Duration::from_secs(0).try_into().unwrap())
         .http_only(true)
         .build();
-    //
+
     headers.append(
         SET_COOKIE,
         format!("{};", session_removal_cookie)
             .try_into()
             .context("Trouble injecting cookie.")?,
     );
-    //
+
     Ok((
         headers,
         Redirect::to(authenticator.get_oauth_callback().as_ref()),

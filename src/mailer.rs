@@ -16,6 +16,26 @@ pub struct Mailer {
     mailbox: Mailbox,
 }
 
+// pub trait MailerTrait {
+//     fn send_email(
+//         &self,
+//         recipient: &Email,
+//         subject: &str,
+//         body: &str,
+//     ) -> impl std::future::Future<Output = ()> + Send;
+//     fn send_reset_password(
+//         &self,
+//         recipient: &Email,
+//         link: &url::Url,
+//     ) -> impl std::future::Future<Output = Result<bool>> + Send;
+//
+//     fn send_confirm_email(
+//         &self,
+//         recipient: &Email,
+//         link: &url::Url,
+//     ) -> impl std::future::Future<Output = Result<bool>> + Send;
+// }
+
 impl Mailer {
     pub fn new(smtp_settings: smtp::Settings) -> Self {
         Self {
@@ -24,6 +44,12 @@ impl Mailer {
         }
     }
 
+    // pub async fn send_email(&self, recipient: &Email, subject: &str, body: &str) {
+    //     let email = lettre::Message::builder()
+    //         .from(self.mailbox.clone())
+    //         .subject(subject)
+    //         .header(lettre::message::header::ContentType::TEXT_HTML);
+    // }
     /// send confirmation email.
     pub async fn send_confirm_email(&self, recipient: &Email, link: &url::Url) -> Result<bool> {
         let email = lettre::Message::builder()

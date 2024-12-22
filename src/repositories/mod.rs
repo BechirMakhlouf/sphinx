@@ -8,6 +8,7 @@ use crate::config;
 
 pub mod auth;
 pub mod identity;
+pub mod otp;
 pub mod session;
 pub mod token;
 pub mod user;
@@ -21,6 +22,7 @@ pub struct Repository {
     pub session: SessionRepository,
     pub user: UserRepository,
     pub token: TokenRepository,
+    //pub otps: OTPRepository,
 }
 
 impl Repository {

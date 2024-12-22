@@ -102,7 +102,6 @@ pub async fn callback(
         .await
         .context("failed in sending request to authorization server")?;
 
-    // Fetch user data from google
     let client = reqwest::Client::new();
 
     let user_data = client
@@ -114,8 +113,6 @@ pub async fn callback(
         .json::<User>()
         .await
         .context("failed to Deserialize to text")?;
-
-    //Ok(format!("{user_data:?}").into_response())
 
     let user_identity = OrphanIdentity::builder(
         user_data.id.clone(),
