@@ -1,4 +1,5 @@
 mod confirm_email;
+mod control_plane;
 mod email_auth;
 mod health;
 mod oauth;
@@ -28,6 +29,7 @@ pub fn get_router(
                 .post(reset_password::reset_password),
         )
         //.route("/user", axum::routing::delete())
+        .nest("/control_plane", control_plane::get_router())
         .nest("/oauth", oauth::get_router())
         //TODO: CHANGE TO APP STATE
         .layer(axum::Extension(authenticator))

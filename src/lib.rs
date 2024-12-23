@@ -5,7 +5,6 @@ use axum::{
 
 pub mod authenticator;
 pub mod config;
-pub mod control_plane;
 pub mod mailer;
 pub mod models;
 pub mod oauth;
